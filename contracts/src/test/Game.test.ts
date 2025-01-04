@@ -16,7 +16,7 @@ import {
   deployZkApp,
   hashFieldsWithPoseidon,
 } from '../utils/helpers';
-import { PlayerTiles, Tile, GameInput, GameOutput } from '../utils/types';
+import { PlayerTiles, Tile, GameOutput } from '../utils/types';
 
 let proofsEnabled = false;
 let verificationKey: string;
@@ -65,14 +65,6 @@ describe('GameContract', () => {
         new Tile({ id: hashUrl('/models/tile2.glb') }),
       ],
     });
-
-    // Compute the board hash including the salt.
-    boardHash = hashFieldsWithPoseidon(
-      boardForPlayer.tiles.map((tile) => tile.id)
-    );
-    console.log('boardHash:', boardHash.toString());
-
-    playerSignature = Signature.create(PlayerKey, [boardHash, Field(123)]);
   });
 
   it('should deploy the contract', async () => {
@@ -104,8 +96,8 @@ describe('GameContract', () => {
   it('should initialise the game', async () => {
     const proof = await TileGameLogic.initializeGameForUser(
       verificationKey,
-      boardHash,
-      PlayerAccount
+      PlayerAccount,
+      boardForPlayer.tiles
     );
     earlierProof = proof;
 
@@ -114,12 +106,18 @@ describe('GameContract', () => {
 
   it('should play turn 1', async () => {
     const selectedTiles = [Field(0), Field(2)];
+    const selectedTilesHash = hashFieldsWithPoseidon(
+      selectedTiles.map((tile) => tile)
+    );
+    const step = earlierProof.publicOutput.step;
+    playerSignature = Signature.create(PlayerKey, [step, selectedTilesHash]);
 
     const proof = await TileGameLogic.play(
       earlierProof,
       verificationKey,
       playerSignature,
-      selectedTiles
+      selectedTiles,
+      step
     );
 
     earlierProof = proof;
@@ -150,12 +148,18 @@ describe('GameContract', () => {
 
   it('should play turn 2', async () => {
     const selectedTiles = [Field(1), Field(3)];
+    const selectedTilesHash = hashFieldsWithPoseidon(
+      selectedTiles.map((tile) => tile)
+    );
+    const step = earlierProof.publicOutput.step;
+    playerSignature = Signature.create(PlayerKey, [step, selectedTilesHash]);
 
     const proof = await TileGameLogic.play(
       earlierProof,
       verificationKey,
       playerSignature,
-      selectedTiles
+      selectedTiles,
+      step
     );
 
     earlierProof = proof;

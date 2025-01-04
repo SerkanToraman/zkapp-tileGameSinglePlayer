@@ -13,6 +13,7 @@ export class Tile extends Struct({
 // Define the PublicInput structure
 export class GameInput extends Struct({
   signiture: Signature,
+  step: Field,
 }) {}
 
 // Define the Output structure
@@ -32,6 +33,7 @@ export class GameInput extends Struct({
 export class GameOutput extends Struct({
   Player: PublicKey,
   turn: Field,
+  step: Field,
   move: Provable.Array(Field, 2),
   PlayerPreviousMoves: Provable.Array(Field, 4),
   boardHash: Field,

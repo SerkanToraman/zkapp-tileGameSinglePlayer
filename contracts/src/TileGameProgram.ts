@@ -7,6 +7,12 @@ import {
   Signature,
 } from 'o1js';
 import { GameInput, GameOutput, Tile } from './utils/types';
+import { hashFieldsWithPoseidon } from './utils/helpers';
+
+//TODO:
+//Dİnamik signiture (move ve turn olacak)
+//Turn de 1,2 yerine artan sayi olacak ve kullaniclar turn sayisi mod kullanarak tek mi cift mi di ye kontol edilecek
+// Bitcoine bak, etherium - proof of stake and proof of work
 
 const emptyTiles = new Array(2).fill(Field(-1));
 const emptyPreviousMoves = new Array(4).fill(Field(-1));
@@ -21,12 +27,17 @@ export const TileGameProgram = ZkProgram({
   methods: {
     // Initialize the game state for Player 1
     initGamePlayer: {
-      privateInputs: [Field, PublicKey],
-      async method(boardHash: Field, player: PublicKey) {
+      privateInputs: [PublicKey, Provable.Array(Tile, 4)],
+      async method(player: PublicKey, playerBoard: Tile[]) {
+        // Compute the board hash including the salt.
+        const boardHash = hashFieldsWithPoseidon(
+          playerBoard.map((tile) => tile.id)
+        );
         return {
           publicOutput: new GameOutput({
             Player: player,
             turn: Field(1),
+            step: Field(1),
             move: emptyTiles,
             PlayerPreviousMoves: emptyPreviousMoves,
             boardHash,
@@ -42,20 +53,26 @@ export const TileGameProgram = ZkProgram({
         SelfProof<undefined, GameOutput>,
         Provable.Array(Field, 2),
         Signature,
+        Field,
       ],
       async method(
         earlierProof: SelfProof<undefined, GameOutput>,
         selectedTiles: Field[],
-        playerSignature: Signature
+        playerSignature: Signature,
+        step: Field
       ) {
-        earlierProof.verify();
-
+        const selectedTilesHash = hashFieldsWithPoseidon(
+          selectedTiles.map((tile) => tile)
+        );
         const isVerified = playerSignature.verify(
           earlierProof.publicOutput.Player,
-          [earlierProof.publicOutput.boardHash, Field(123)]
+          [step, selectedTilesHash]
         );
+        earlierProof.verify();
         // Enforce the signature verification result
         isVerified.assertTrue('Signature verification failed!');
+
+        earlierProof.publicOutput.step.equals(step).assertTrue('Invalid step!');
 
         // Assert that Player is not empty
         earlierProof.publicOutput.Player.equals(PublicKey.empty())
@@ -71,6 +88,7 @@ export const TileGameProgram = ZkProgram({
           publicOutput: new GameOutput({
             Player: earlierProof.publicOutput.Player,
             turn: Field(2),
+            step: step.add(Field(1)),
             move: selectedTiles,
             PlayerPreviousMoves: earlierProof.publicOutput.PlayerPreviousMoves,
             boardHash: earlierProof.publicOutput.boardHash,
@@ -91,6 +109,13 @@ export const TileGameProgram = ZkProgram({
       ) {
         earlierProof.verify();
         // Assert that the turn is Field(2)
+        const boardHash = hashFieldsWithPoseidon(
+          playerBoard.map((tile) => tile.id)
+        );
+        earlierProof.publicOutput.boardHash
+          .equals(boardHash)
+          .assertTrue('Invalid board hash!');
+
         earlierProof.publicOutput.turn
           .equals(Field(2))
           .assertTrue("It is not House's turn!");
@@ -118,11 +143,6 @@ export const TileGameProgram = ZkProgram({
         }
         // Check if the selected tiles match
         const isTilesMatch = tile1.equals(tile2).and(isMoveEmpty).not();
-
-        Provable.log(
-          'earlierProof.publicOutput.move:',
-          earlierProof.publicOutput.move
-        );
 
         // Loop through matched tiles to validate selected tiles without using `if`
         for (let i = 0; i < boardArraySize; i++) {
@@ -191,6 +211,7 @@ export const TileGameProgram = ZkProgram({
           publicOutput: new GameOutput({
             Player: earlierProof.publicOutput.Player,
             turn: Field(1),
+            step: earlierProof.publicOutput.step.add(Field(1)),
             move: emptyTiles,
             PlayerPreviousMoves,
             boardHash: earlierProof.publicOutput.boardHash,

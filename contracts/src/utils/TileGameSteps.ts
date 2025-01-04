@@ -6,13 +6,13 @@ export class TileGameLogic {
   // Method for User 1 to initialize the game
   static async initializeGameForUser(
     verificationKey: string,
-    boardHash: Field,
-    player: PublicKey
+    player: PublicKey,
+    playerBoard: Tile[]
   ) {
     // Generate proof and output using the ZkProgram
     const { proof: initGameProof } = await TileGameProgram.initGamePlayer(
-      boardHash,
-      player
+      player,
+      playerBoard
     );
 
     // Verify the proof
@@ -30,13 +30,15 @@ export class TileGameLogic {
     earlierProof: SelfProof<undefined, GameOutput>,
     verificationKey: string,
     playerSignature: Signature,
-    selectedTiles: Field[]
+    selectedTiles: Field[],
+    step: Field
   ) {
     // Generate proof and output using the ZkProgram
     const { proof: playTurn } = await TileGameProgram.play(
       earlierProof,
       selectedTiles,
-      playerSignature
+      playerSignature,
+      step
     );
 
     // Verify the proof
