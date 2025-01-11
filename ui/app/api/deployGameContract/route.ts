@@ -8,8 +8,8 @@ export async function POST(request: NextRequest) {
     console.log("Deploying game contract...");
 
     // Parse the request body for required parameters
-    const { playerKeys } = await request.json();
-    console.log("Player keys received:", playerKeys);
+    const { playerPublicKey } = await request.json();
+    console.log("Player keys received:", playerPublicKey);
 
     // Generate a random deployer key (for testing or development)
     const deployerPrivateKey = PrivateKey.random();
@@ -18,11 +18,18 @@ export async function POST(request: NextRequest) {
       deployerPrivateKey.toBase58()
     );
 
+    console.log("playerKey Test", playerPublicKey);
     // Convert playerKeys from Base58 strings to PublicKey instances
-    const players = playerKeys.map((key: string) => PublicKey.fromBase58(key));
+    // const players = playerKeys.map((key: string) => PublicKey.fromBase58(key));
+
+    // Convert the playerKey from Base58 string to PublicKey instance
+    const playerPublicKeyString = PublicKey.fromBase58(playerPublicKey);
 
     // Call your deployGameContract function with the deployer key and player keys
-    const result = await deployGameContract(deployerPrivateKey, players);
+    const result = await deployGameContract(
+      deployerPrivateKey,
+      playerPublicKeyString
+    );
 
     console.log("Game contract deployed successfully:", result);
 

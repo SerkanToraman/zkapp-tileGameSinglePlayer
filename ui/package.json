@@ -13,10 +13,13 @@
   "dependencies": {
     "@aurowallet/mina-provider": "^1.0.6",
     "coi-serviceworker": "^0.1.7",
+    "comlink": "^4.4.2",
     "next": "14.2.12",
     "o1js": "^1.*",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "uuid": "^11.0.2",
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",

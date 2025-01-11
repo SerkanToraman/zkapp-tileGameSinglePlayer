@@ -19,6 +19,7 @@ export class Wallet {
     }
 
     const accounts = await window.mina.requestAccounts();
+    console.log("accounts", accounts[0]);
     if (accounts.length > 0 && accounts[0]) {
       this.account = PublicKey.fromBase58(accounts[0]).toBase58();
       this.isConnected = true;

@@ -31,8 +31,7 @@ describe('GameContract', () => {
     PlayerKey: PrivateKey,
     zkAppAddress: PublicKey,
     zkAppPrivateKey: PrivateKey,
-    zkApp: GameContract,
-    boardHash: Field;
+    zkApp: GameContract;
 
   beforeAll(async () => {
     if (proofsEnabled) await GameContract.compile();

@@ -9,10 +9,11 @@ import { GameContract } from "../../../contracts/src/GameContract";
  */
 async function deployGameContract(
   deployerKey: PrivateKey,
-  players: PublicKey[]
+  player: PublicKey
 ): Promise<{ zkAppAddress: string; txId: string }> {
   const zkAppPrivateKey = PrivateKey.random();
   const zkAppAddress = zkAppPrivateKey.toPublicKey();
+  console.log("zkAppAddress", zkAppAddress.toBase58());
   const zkAppInstance = new GameContract(zkAppAddress);
 
   const Network = Mina.Network(
@@ -23,22 +24,33 @@ async function deployGameContract(
   const vk = (await GameContract.compile()).verificationKey.hash.toJSON();
   console.log("vk", vk);
 
-  const deployTransaction = await Mina.transaction(
-    {
-      sender: deployerKey.toPublicKey(),
-      fee: UInt64.from(100_000_000),
-    },
-    async () => {
-      AccountUpdate.fundNewAccount(deployerKey.toPublicKey());
-      await zkAppInstance.deploy();
-      await zkAppInstance.initGame(players[0]);
-    }
-  );
+  const balance = await Mina.getBalance(player);
+  console.log("Player Balance:", balance.toString());
+
+  const deployTransaction = await Mina.transaction(async () => {
+    AccountUpdate.fundNewAccount(player);
+    await zkAppInstance.deploy();
+    await zkAppInstance.initGame(player);
+  });
+
   await deployTransaction.prove();
 
+  // Serialize the transaction (optional for debugging or signing via wallet)
+  const serializedTransaction = deployTransaction.toJSON();
+  console.log(
+    "Serialized Transaction:",
+    JSON.stringify(serializedTransaction, null, 2)
+  );
+  // Sign the transaction with necessary private keys
   deployTransaction.sign([deployerKey, zkAppPrivateKey]);
+
+  // Send the transaction to the Mina network
+  console.log("Sending the transaction...");
   const pendingTransaction = await deployTransaction.send();
+
+  // Retrieve and return the transaction hash
   const txId = pendingTransaction.hash;
+  console.log("Transaction ID:", txId);
 
   return { zkAppAddress: zkAppAddress.toBase58(), txId };
 }

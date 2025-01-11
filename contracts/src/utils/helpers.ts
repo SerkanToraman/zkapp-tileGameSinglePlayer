@@ -63,7 +63,6 @@ export async function deployZkApp(
   zkApp: GameContract,
   zkAppPrivateKey: PrivateKey,
   Player1Account: Mina.TestPublicKey,
-
   Player1Key: PrivateKey
 ) {
   const txn = await Mina.transaction(deployerAccount, async () => {
