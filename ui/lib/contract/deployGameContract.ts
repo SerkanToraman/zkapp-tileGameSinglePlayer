@@ -24,8 +24,8 @@ async function deployGameContract(
   const vk = (await GameContract.compile()).verificationKey.hash.toJSON();
   console.log("vk", vk);
 
-  const balance = await Mina.getBalance(player);
-  console.log("Player Balance:", balance.toString());
+  // const balance = await Mina.getBalance(player);
+  // console.log("Player Balance:", balance.toString());
 
   const deployTransaction = await Mina.transaction(async () => {
     AccountUpdate.fundNewAccount(player);
