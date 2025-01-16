@@ -1,10 +1,15 @@
 "use client";
 import React, { useState } from "react";
 import { useGameStore } from "../../store/gameStore";
+import { deployGameContract } from "../../lib/contract/deployGameContract";
+import { PublicKey } from "o1js";
 
 const StartPage: React.FC = () => {
   const userWallet = useGameStore((state) => state.userWallet);
-  const [contractResult, setContractResult] = useState<string | null>(null); // State to store contract deployment result
+  const [contractResult, setContractResult] = useState<{
+    zkAppAddress: string;
+    hash: string;
+  } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null); // State to store error message
   const [isLoading, setIsLoading] = useState<boolean>(false); // State to manage loading state
 
@@ -14,23 +19,13 @@ const StartPage: React.FC = () => {
       setContractResult(null); // Clear previous results
       setErrorMessage(null); // Clear previous errors
 
-      const response = await fetch("/api/deployGameContract", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ playerPublicKey }),
-      });
+      const playerPublicKeyString = PublicKey.fromBase58(playerPublicKey);
 
-      if (!response.ok) {
-        throw new Error("Failed to deploy contract");
-      }
+      const response = await deployGameContract(playerPublicKeyString);
 
-      const result = await response.json();
-      console.log("Contract deployed:", result);
+      console.log("Contract deployed:", response);
 
-      // Set the result in state to display it in the UI
-      setContractResult(JSON.stringify(result, null, 2));
+      setContractResult(response);
     } catch (error) {
       console.error("Failed to deploy contract:", error);
 
@@ -82,16 +77,24 @@ const StartPage: React.FC = () => {
       {contractResult && (
         <div>
           <h3>Deployment Result:</h3>
-          <pre
+          <p>
+            <strong>zkApp Address:</strong> {contractResult.zkAppAddress}
+          </p>
+          <p>
+            <strong>Transaction Hash:</strong> {contractResult.hash}
+          </p>
+          <a
+            href={`https://minascan.io/devnet/tx/${contractResult.hash}`}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
-              background: "#f4f4f4",
-              padding: "10px",
-              borderRadius: "5px",
-              overflowX: "auto",
+              color: "#007BFF",
+              textDecoration: "none",
+              fontSize: "16px",
             }}
           >
-            {contractResult}
-          </pre>
+            View Transaction on MinaScan
+          </a>
         </div>
       )}
 

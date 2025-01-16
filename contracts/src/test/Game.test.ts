@@ -50,6 +50,10 @@ describe('GameContract', () => {
     [deployerAccount, PlayerAccount] = localChain.testAccounts;
     deployerKey = deployerAccount.key;
     PlayerKey = PlayerAccount.key;
+    const Player1AccountBalance = await Mina.getBalance(PlayerAccount);
+    console.log(
+      `Player 1 initial balance: ${Player1AccountBalance.toString()}`
+    );
 
     zkAppPrivateKey = PrivateKey.random();
     zkAppAddress = zkAppPrivateKey.toPublicKey();
@@ -67,14 +71,7 @@ describe('GameContract', () => {
   });
 
   it('should deploy the contract', async () => {
-    await deployZkApp(
-      deployerAccount,
-      deployerKey,
-      zkApp,
-      zkAppPrivateKey,
-      PlayerAccount,
-      PlayerKey
-    );
+    await deployZkApp(zkApp, zkAppPrivateKey, PlayerAccount, PlayerKey);
 
     // Check that the zkApp was deployed to the correct address
     expect(zkApp.address).toEqual(zkAppAddress);
@@ -133,11 +130,10 @@ describe('GameContract', () => {
     checkGameOverAndDistributeReward(
       proof.publicOutput.playerMatchCount,
       PlayerAccount,
-      deployerAccount,
-      deployerKey,
       zkApp,
       zkAppPrivateKey,
-      zkAppAddress
+      zkAppAddress,
+      PlayerKey
     );
 
     earlierProof = proof;
@@ -175,11 +171,10 @@ describe('GameContract', () => {
     checkGameOverAndDistributeReward(
       proof.publicOutput.playerMatchCount,
       PlayerAccount,
-      deployerAccount,
-      deployerKey,
       zkApp,
       zkAppPrivateKey,
-      zkAppAddress
+      zkAppAddress,
+      PlayerKey
     );
 
     earlierProof = proof;

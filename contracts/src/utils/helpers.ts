@@ -24,11 +24,10 @@ export function hashFieldsWithPoseidon(fields: Field[]): Field {
 export function checkGameOverAndDistributeReward(
   playerMatchCount: Field,
   currentPlayerAccount: PublicKey,
-  deployerAccount: Mina.TestPublicKey,
-  deployerKey: PrivateKey,
   zkApp: GameContract,
   zkAppPrivateKey: PrivateKey,
-  zkAppAddress: PublicKey
+  zkAppAddress: PublicKey,
+  PlayerKey: PrivateKey
 ) {
   Provable.asProver(() => {
     // Check if the number of non-zero matched tiles is 2
@@ -44,12 +43,11 @@ export function checkGameOverAndDistributeReward(
 
       // Call distributeReward directly
       distributeReward(
-        deployerAccount,
-        deployerKey,
         zkApp,
         zkAppPrivateKey,
         zkAppAddress,
-        currentPlayerAccount
+        currentPlayerAccount,
+        PlayerKey
       );
     } else {
       console.log('Game is not over yet.');
@@ -58,38 +56,35 @@ export function checkGameOverAndDistributeReward(
 }
 
 export async function deployZkApp(
-  deployerAccount: Mina.TestPublicKey,
-  deployerKey: PrivateKey,
   zkApp: GameContract,
   zkAppPrivateKey: PrivateKey,
   Player1Account: Mina.TestPublicKey,
   Player1Key: PrivateKey
 ) {
-  const txn = await Mina.transaction(deployerAccount, async () => {
-    AccountUpdate.fundNewAccount(deployerAccount);
+  const txn = await Mina.transaction(Player1Account, async () => {
+    AccountUpdate.fundNewAccount(Player1Account);
     await zkApp.deploy();
     await zkApp.initGame(Player1Account);
   });
 
   // Sign the transaction with all required keys
   await txn.prove();
-  await txn.sign([deployerKey, zkAppPrivateKey, Player1Key]).send();
+  await txn.sign([zkAppPrivateKey, Player1Key]).send();
 }
 
 export async function distributeReward(
-  deployerAccount: Mina.TestPublicKey,
-  deployerKey: PrivateKey,
   zkApp: GameContract,
   zkAppPrivateKey: PrivateKey,
   zkAppAddress: PublicKey,
-  winnerAccount: PublicKey
+  winnerAccount: PublicKey,
+  PlayerKey: PrivateKey
 ) {
-  const txn = await Mina.transaction(deployerAccount, async () => {
+  const txn = await Mina.transaction(winnerAccount, async () => {
     await zkApp.distributeReward(winnerAccount);
   });
 
   await txn.prove();
-  await txn.sign([deployerKey, zkAppPrivateKey]).send();
+  await txn.sign([zkAppPrivateKey, PlayerKey]).send();
 
   const winnerBalanceAfter = await Mina.getBalance(winnerAccount);
   const zkAppBalanceAfter = await Mina.getBalance(zkAppAddress);

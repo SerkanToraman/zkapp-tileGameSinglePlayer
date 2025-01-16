@@ -1,16 +1,21 @@
-import { PrivateKey, PublicKey, UInt64, Mina, AccountUpdate } from "o1js";
+import { PrivateKey, PublicKey, Mina, AccountUpdate } from "o1js";
 import { GameContract } from "../../../contracts/src/GameContract";
+
+// Define types for handling transaction responses and errors
+
+type SendTransactionHash = {
+  hash: string;
+};
 
 /**
  * Helper function to deploy the GameContract smart contract
  * @param {PrivateKey} deployerKey - The private key for the deployer account
  * @param {PublicKey[]} players - Array of public keys for players (2 players)
- * @returns {Promise<{ zkAppAddress: string; txId: string }>} - Returns the zkApp address and transaction ID
+ * @returns {Promise<{ zkAppAddress: string; hash: string }>} - Returns the zkApp address and transaction hash
  */
 async function deployGameContract(
-  deployerKey: PrivateKey,
   player: PublicKey
-): Promise<{ zkAppAddress: string; txId: string }> {
+): Promise<{ zkAppAddress: string; hash: string }> {
   const zkAppPrivateKey = PrivateKey.random();
   const zkAppAddress = zkAppPrivateKey.toPublicKey();
   console.log("zkAppAddress", zkAppAddress.toBase58());
@@ -24,35 +29,49 @@ async function deployGameContract(
   const vk = (await GameContract.compile()).verificationKey.hash.toJSON();
   console.log("vk", vk);
 
-  // const balance = await Mina.getBalance(player);
-  // console.log("Player Balance:", balance.toString());
-
-  const deployTransaction = await Mina.transaction(async () => {
-    AccountUpdate.fundNewAccount(player);
-    await zkAppInstance.deploy();
-    await zkAppInstance.initGame(player);
-  });
-
+  // Create the deployment transaction
+  const deployTransaction = await Mina.transaction(
+    {
+      sender: player,
+      fee: 1e8, // 100,000,000 in base units
+    },
+    async () => {
+      AccountUpdate.fundNewAccount(player);
+      await zkAppInstance.deploy();
+      await zkAppInstance.initGame(player);
+    }
+  );
   await deployTransaction.prove();
 
-  // Serialize the transaction (optional for debugging or signing via wallet)
-  const serializedTransaction = deployTransaction.toJSON();
-  console.log(
-    "Serialized Transaction:",
-    JSON.stringify(serializedTransaction, null, 2)
-  );
   // Sign the transaction with necessary private keys
-  deployTransaction.sign([deployerKey, zkAppPrivateKey]);
+  deployTransaction.sign([zkAppPrivateKey]);
 
-  // Send the transaction to the Mina network
-  console.log("Sending the transaction...");
-  const pendingTransaction = await deployTransaction.send();
+  const serializedTransaction = deployTransaction.toJSON();
 
-  // Retrieve and return the transaction hash
-  const txId = pendingTransaction.hash;
-  console.log("Transaction ID:", txId);
+  console.log("Transaction is signed. Ready to send...");
 
-  return { zkAppAddress: zkAppAddress.toBase58(), txId };
+  if (typeof window !== "undefined" && window.mina) {
+    try {
+      const { hash }: SendTransactionHash = await window.mina.sendTransaction({
+        transaction: serializedTransaction,
+        feePayer: {
+          fee: 0.1,
+          memo: "",
+        },
+      });
+
+      console.log("Transaction sent! Transaction ID:", hash);
+
+      return { zkAppAddress: zkAppAddress.toBase58(), hash };
+    } catch (error: any) {
+      console.error("Error sending transaction:", error);
+      throw new Error(`Failed to send transaction: ${error.message}`);
+    }
+  } else {
+    throw new Error(
+      "Auro Wallet is not available in this environment. Please run this in a browser with Auro Wallet."
+    );
+  }
 }
 
 export { deployGameContract };
