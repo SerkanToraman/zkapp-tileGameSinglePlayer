@@ -1,4 +1,3 @@
-import { Field } from "o1js";
 import * as Comlink from "comlink";
 
 export default class ZkappWorkerClient {
@@ -16,40 +15,7 @@ export default class ZkappWorkerClient {
     this.remoteApi = Comlink.wrap(worker);
   }
 
-  async setActiveInstanceToDevnet() {
-    return this.remoteApi.setActiveInstanceToDevnet();
-  }
-
-  async loadContract() {
-    return this.remoteApi.loadContract();
-  }
-
-  async compileContract() {
-    return this.remoteApi.compileContract();
-  }
-
-  async fetchAccount(publicKeyBase58: string) {
-    return this.remoteApi.fetchAccount(publicKeyBase58);
-  }
-
-  async initZkappInstance(publicKeyBase58: string) {
-    return this.remoteApi.initZkappInstance(publicKeyBase58);
-  }
-
-  async getNum(): Promise<Field> {
-    const result = await this.remoteApi.getNum();
-    return Field.fromJSON(JSON.parse(result as string));
-  }
-
-  async createUpdateTransaction() {
-    return this.remoteApi.createUpdateTransaction();
-  }
-
-  async proveUpdateTransaction() {
-    return this.remoteApi.proveUpdateTransaction();
-  }
-
-  async getTransactionJSON() {
-    return this.remoteApi.getTransactionJSON();
+  async compileTileGameProgram() {
+    return this.remoteApi.compileTileGameProgram();
   }
 }

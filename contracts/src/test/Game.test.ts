@@ -16,18 +16,16 @@ import {
   deployZkApp,
   hashFieldsWithPoseidon,
 } from '../utils/helpers';
-import { PlayerTiles, Tile, GameOutput } from '../utils/types';
+import { PlayerTiles, Tile, PublicOutput } from '../utils/types';
 
-let proofsEnabled = false;
+let proofsEnabled = true;
 let verificationKey: string;
-let earlierProof: SelfProof<undefined, GameOutput>;
+let earlierProof: SelfProof<undefined, PublicOutput>;
 let boardForPlayer: PlayerTiles;
 let playerSignature: Signature;
 
 describe('GameContract', () => {
-  let deployerAccount: Mina.TestPublicKey,
-    deployerKey: PrivateKey,
-    PlayerAccount: Mina.TestPublicKey,
+  let PlayerAccount: Mina.TestPublicKey,
     PlayerKey: PrivateKey,
     zkAppAddress: PublicKey,
     zkAppPrivateKey: PrivateKey,
@@ -47,8 +45,7 @@ describe('GameContract', () => {
     });
     Mina.setActiveInstance(localChain);
 
-    [deployerAccount, PlayerAccount] = localChain.testAccounts;
-    deployerKey = deployerAccount.key;
+    [PlayerAccount] = localChain.testAccounts;
     PlayerKey = PlayerAccount.key;
     const Player1AccountBalance = await Mina.getBalance(PlayerAccount);
     console.log(
@@ -93,7 +90,7 @@ describe('GameContract', () => {
     const proof = await TileGameLogic.initializeGameForUser(
       verificationKey,
       PlayerAccount,
-      boardForPlayer.tiles
+      boardForPlayer.tiles.map((tile) => tile.id)
     );
     earlierProof = proof;
 
@@ -125,7 +122,7 @@ describe('GameContract', () => {
     const proof = await TileGameLogic.check(
       earlierProof,
       verificationKey,
-      boardForPlayer.tiles
+      boardForPlayer.tiles.map((tile) => tile.id)
     );
     checkGameOverAndDistributeReward(
       proof.publicOutput.playerMatchCount,
@@ -166,7 +163,7 @@ describe('GameContract', () => {
     const proof = await TileGameLogic.check(
       earlierProof,
       verificationKey,
-      boardForPlayer.tiles
+      boardForPlayer.tiles.map((tile) => tile.id)
     );
     checkGameOverAndDistributeReward(
       proof.publicOutput.playerMatchCount,

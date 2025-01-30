@@ -1,13 +1,13 @@
 import { verify, Field, SelfProof, PublicKey, Signature } from 'o1js';
 import { TileGameProgram } from '../TileGameProgram';
-import { GameInput, GameOutput, Tile } from './types';
+import { PublicInput, PublicOutput } from './types';
 
 export class TileGameLogic {
   // Method for User 1 to initialize the game
   static async initializeGameForUser(
     verificationKey: string,
     player: PublicKey,
-    playerBoard: Tile[]
+    playerBoard: Field[]
   ) {
     // Generate proof and output using the ZkProgram
     const { proof: initGameProof } = await TileGameProgram.initGamePlayer(
@@ -27,7 +27,7 @@ export class TileGameLogic {
 
   // Method for User to playTurn
   static async play(
-    earlierProof: SelfProof<undefined, GameOutput>,
+    earlierProof: SelfProof<undefined, PublicOutput>,
     verificationKey: string,
     playerSignature: Signature,
     selectedTiles: Field[],
@@ -52,9 +52,9 @@ export class TileGameLogic {
 
   // Method for House to check player move
   static async check(
-    earlierProof: SelfProof<undefined, GameOutput>,
+    earlierProof: SelfProof<undefined, PublicOutput>,
     verificationKey: string,
-    playerBoard: Tile[]
+    playerBoard: Field[]
   ) {
     // Generate proof and output using the ZkProgram
     const { proof: playTurn } = await TileGameProgram.check(

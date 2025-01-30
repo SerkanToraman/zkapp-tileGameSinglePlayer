@@ -1,4 +1,4 @@
-import { TileGameProgram } from "../../../contracts/src/TileGameProgram";
+import { TileGameProgram } from "../../../contracts/build/src/TileGameProgram";
 
 export async function compileTileGameProgram() {
   try {

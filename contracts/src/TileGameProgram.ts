@@ -6,7 +6,7 @@ import {
   PublicKey,
   Signature,
 } from 'o1js';
-import { GameInput, GameOutput, Tile } from './utils/types';
+import { PublicOutput } from './utils/types';
 import { hashFieldsWithPoseidon } from './utils/helpers';
 
 //TODO:
@@ -17,30 +17,38 @@ import { hashFieldsWithPoseidon } from './utils/helpers';
 const emptyTiles = new Array(2).fill(Field(-1));
 const emptyPreviousMoves = new Array(4).fill(Field(-1));
 const boardArraySize = 4;
+const selectedTilesSize = 2;
 
 // Define the TileGameProgram
 export const TileGameProgram = ZkProgram({
   name: 'tile-game',
   publicInput: undefined,
-  publicOutput: GameOutput,
+  publicOutput: PublicOutput,
 
   methods: {
     // Initialize the game state for Player 1
     initGamePlayer: {
-      privateInputs: [PublicKey, Provable.Array(Tile, 4)],
-      async method(player: PublicKey, playerBoard: Tile[]) {
+      privateInputs: [PublicKey, Provable.Array(Field, 4)],
+      async method(player: PublicKey, playerBoard: Field[]) {
+        // Verify player is not empty
+        player.isEmpty().assertFalse('Player public key cannot be empty');
+
+        // Verify playerBoard is complete
+        for (let i = 0; i < boardArraySize; i++) {
+          playerBoard[i].equals(Field(-1)).assertFalse('Invalid tile ID');
+        }
+
         // Compute the board hash including the salt.
-        const boardHash = hashFieldsWithPoseidon(
-          playerBoard.map((tile) => tile.id)
-        );
+        const boardHash = hashFieldsWithPoseidon(playerBoard);
+
         return {
-          publicOutput: new GameOutput({
+          publicOutput: new PublicOutput({
             Player: player,
             turn: Field(1),
             step: Field(1),
             move: emptyTiles,
             PlayerPreviousMoves: emptyPreviousMoves,
-            boardHash,
+            boardHash: boardHash,
             playerMatchCount: Field(0),
           }),
         };
@@ -50,20 +58,22 @@ export const TileGameProgram = ZkProgram({
     // Method to play a turn in the game
     play: {
       privateInputs: [
-        SelfProof<undefined, GameOutput>,
+        SelfProof<undefined, PublicOutput>,
         Provable.Array(Field, 2),
         Signature,
         Field,
       ],
       async method(
-        earlierProof: SelfProof<undefined, GameOutput>,
+        earlierProof: SelfProof<undefined, PublicOutput>,
         selectedTiles: Field[],
         playerSignature: Signature,
         step: Field
       ) {
-        const selectedTilesHash = hashFieldsWithPoseidon(
-          selectedTiles.map((tile) => tile)
-        );
+        const selectedTilesArray = new Array(selectedTilesSize);
+        for (let i = 0; i < selectedTilesSize; i++) {
+          selectedTilesArray[i] = selectedTiles[i];
+        }
+        const selectedTilesHash = hashFieldsWithPoseidon(selectedTilesArray);
         const isVerified = playerSignature.verify(
           earlierProof.publicOutput.Player,
           [step, selectedTilesHash]
@@ -85,7 +95,7 @@ export const TileGameProgram = ZkProgram({
           .assertTrue("It is not Player 2's turn!");
 
         return {
-          publicOutput: new GameOutput({
+          publicOutput: new PublicOutput({
             Player: earlierProof.publicOutput.Player,
             turn: Field(2),
             step: step.add(Field(1)),
@@ -100,18 +110,16 @@ export const TileGameProgram = ZkProgram({
 
     check: {
       privateInputs: [
-        SelfProof<undefined, GameOutput>,
-        Provable.Array(Tile, 4),
+        SelfProof<undefined, PublicOutput>,
+        Provable.Array(Field, 4),
       ],
       async method(
-        earlierProof: SelfProof<undefined, GameOutput>,
-        playerBoard: Tile[]
+        earlierProof: SelfProof<undefined, PublicOutput>,
+        playerBoard: Field[]
       ) {
         earlierProof.verify();
         // Assert that the turn is Field(2)
-        const boardHash = hashFieldsWithPoseidon(
-          playerBoard.map((tile) => tile.id)
-        );
+        const boardHash = hashFieldsWithPoseidon(playerBoard);
         earlierProof.publicOutput.boardHash
           .equals(boardHash)
           .assertTrue('Invalid board hash!');
@@ -132,12 +140,12 @@ export const TileGameProgram = ZkProgram({
         for (let i = 0; i < boardArraySize; i++) {
           tile1 = Provable.if(
             earlierProof.publicOutput.move[0].equals(Field(i)),
-            playerBoard[i].id,
+            playerBoard[i],
             tile1
           );
           tile2 = Provable.if(
             earlierProof.publicOutput.move[1].equals(Field(i)),
-            playerBoard[i].id,
+            playerBoard[i],
             tile2
           );
         }
@@ -208,7 +216,7 @@ export const TileGameProgram = ZkProgram({
           ]
         );
         return {
-          publicOutput: new GameOutput({
+          publicOutput: new PublicOutput({
             Player: earlierProof.publicOutput.Player,
             turn: Field(1),
             step: earlierProof.publicOutput.step.add(Field(1)),

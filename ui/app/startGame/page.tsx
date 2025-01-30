@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useGameStore } from "../../store/gameStore";
 import { deployGameContract } from "../../lib/contract/deployGameContract";
 import { PublicKey } from "o1js";
-import { compileTileGameProgram } from "../../lib/zkProgram/compileZkProgram";
 
 const StartPage: React.FC = () => {
   const userWallet = useGameStore((state) => state.userWallet);

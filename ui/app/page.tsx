@@ -2,20 +2,45 @@
 
 import "./reactCOIServiceWorker";
 import Head from "next/head";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // Import the useRouter hook
 import { useWalletStore } from "../store/walletStore";
-import { compileTileGameProgram } from "../lib/zkProgram/compileZkProgram";
+import "./reactCOIServiceWorker";
+import ZkappWorkerClient from "../lib/contract/zkappWorkerClient";
+
 export default function Home() {
   const router = useRouter(); // Initialize the router
   const { walletInfo, connect } = useWalletStore();
+  const [zkappWorkerClient, setZkappWorkerClient] =
+    useState<null | ZkappWorkerClient>(null);
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("");
 
   // Redirect to GameRoom when wallet is connected
   useEffect(() => {
     const init = async () => {
       if (walletInfo.isConnected) {
-        await compileTileGameProgram();
-        router.push("/startGame");
+        try {
+          setLoading(true);
+          setStatus("Initializing web worker...");
+
+          const zkappWorkerClient = new ZkappWorkerClient();
+          setZkappWorkerClient(zkappWorkerClient);
+
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          setStatus("Loading web worker complete");
+
+          setStatus("Compiling TileGame program...");
+          await zkappWorkerClient.compileTileGameProgram();
+          setStatus("Compilation complete");
+
+          router.push("/startGame");
+        } catch (error) {
+          console.error("Initialization error:", error);
+          setStatus("Error occurred during initialization");
+        } finally {
+          setLoading(false);
+        }
       }
     };
     init();
@@ -41,6 +66,13 @@ export default function Home() {
               Connect Wallet
             </button>
           </>
+        )}
+
+        {/* Loading Status */}
+        {loading && (
+          <div>
+            <p>Loading: {status}</p>
+          </div>
         )}
       </div>
     </>
