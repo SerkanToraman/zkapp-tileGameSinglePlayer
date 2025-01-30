@@ -22,7 +22,7 @@ export class GameContract extends SmartContract {
     const senderUpdate1 = AccountUpdate.createSigned(player1Address);
     senderUpdate1.send({
       to: this.address,
-      amount: UInt64.from(2_000_000_000),
+      amount: UInt64.from(200_000_000),
     });
   }
 
@@ -32,6 +32,6 @@ export class GameContract extends SmartContract {
     const isWinnerValid = winnerAddress.equals(p1);
     isWinnerValid.assertTrue('Winner must be one of the two players');
 
-    this.send({ to: winnerAddress, amount: UInt64.from(2_000_000_000) });
+    this.send({ to: winnerAddress, amount: UInt64.from(200_000_000) });
   }
 }

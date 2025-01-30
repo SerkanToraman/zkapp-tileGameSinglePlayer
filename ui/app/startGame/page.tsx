@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useGameStore } from "../../store/gameStore";
 import { deployGameContract } from "../../lib/contract/deployGameContract";
 import { PublicKey } from "o1js";
+import { compileTileGameProgram } from "../../lib/zkProgram/compileZkProgram";
 
 const StartPage: React.FC = () => {
   const userWallet = useGameStore((state) => state.userWallet);
@@ -23,8 +24,6 @@ const StartPage: React.FC = () => {
 
       const response = await deployGameContract(playerPublicKeyString);
 
-      console.log("Contract deployed:", response);
-
       setContractResult(response);
     } catch (error) {
       console.error("Failed to deploy contract:", error);
@@ -36,9 +35,10 @@ const StartPage: React.FC = () => {
     }
   };
 
-  const handleDeployClick = () => {
+  const handleDeployClick = async () => {
     if (userWallet) {
-      deployContract(userWallet);
+      await deployContract(userWallet);
+      console.log("Deployed contract");
     } else {
       setErrorMessage("User wallet is not available.");
     }

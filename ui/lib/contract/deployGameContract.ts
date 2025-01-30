@@ -36,11 +36,11 @@ async function deployGameContract(
       fee: 1e8, // 100,000,000 in base units
     },
     async () => {
-      AccountUpdate.fundNewAccount(player);
       await zkAppInstance.deploy();
       await zkAppInstance.initGame(player);
     }
   );
+
   await deployTransaction.prove();
 
   // Sign the transaction with necessary private keys
