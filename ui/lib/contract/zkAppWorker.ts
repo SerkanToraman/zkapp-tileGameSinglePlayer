@@ -1,10 +1,10 @@
-import { Mina, PublicKey, fetchAccount } from "o1js";
 import * as Comlink from "comlink";
-import { GameContract } from "../../../contracts/build/src/GameContract";
-import { TileGameProgram } from "../../../contracts/build/src/TileGameProgram";
 
 export const api = {
   async compileTileGameProgram() {
+    const TileGameProgram = (
+      await import("../../../contracts/build/src/TileGameProgram.js")
+    )["TileGameProgram"];
     await TileGameProgram.compile();
   },
 };
