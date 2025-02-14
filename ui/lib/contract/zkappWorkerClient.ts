@@ -1,4 +1,6 @@
 import * as Comlink from "comlink";
+import { Tile } from "../types";
+import { PublicKey, Field } from "o1js";
 
 export default class ZkappWorkerClient {
   // ---------------------------------------------------------------------------------------
@@ -17,5 +19,20 @@ export default class ZkappWorkerClient {
 
   async compileTileGameProgram() {
     return this.remoteApi.compileTileGameProgram();
+  }
+
+  async initializeGame(
+    verificationKey: string,
+    playerPublicKey: PublicKey,
+    //convert tiles to fields
+    tiles: bigint[]
+  ) {
+    //pass verificationKey, player, playerBoard to the worker
+    console.log("initializeGameClient");
+    return await this.remoteApi.initializeGame(
+      verificationKey,
+      playerPublicKey.toBase58(),
+      tiles
+    );
   }
 }

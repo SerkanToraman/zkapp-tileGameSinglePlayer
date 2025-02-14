@@ -3,34 +3,50 @@ import React, { useState, useEffect } from "react";
 import { useGameStore } from "../../store/gameStore";
 import { deployGameContract } from "../../lib/contract/deployGameContract";
 import { PublicKey } from "o1js";
+import { generateTiles } from "../../lib/tile/generateTiles";
+import { useTileStore } from "../../store/tileStore";
+import { useRouter } from "next/navigation";
+import { useZkProgramStore } from "../../store/zkProgramStore";
+import { hashUrl } from "../../lib/zkProgram/helpers";
 
 const StartPage: React.FC = () => {
+  const router = useRouter(); // Initialize the router
   const userWallet = useGameStore((state) => state.userWallet);
   const [contractResult, setContractResult] = useState<{
     zkAppAddress: string;
     hash: string;
   } | null>(null);
+  const { verificationKey, zkAppWorkerClient } = useZkProgramStore();
   const [errorMessage, setErrorMessage] = useState<string | null>(null); // State to store error message
   const [isLoading, setIsLoading] = useState<boolean>(false); // State to manage loading state
-
+  const { setTiles } = useTileStore();
   const deployContract = async (playerPublicKey: string) => {
     try {
       setIsLoading(true);
-      setContractResult(null); // Clear previous results
-      setErrorMessage(null); // Clear previous errors
+      setContractResult(null);
+      setErrorMessage(null);
 
       const playerPublicKeyString = PublicKey.fromBase58(playerPublicKey);
 
       const response = await deployGameContract(playerPublicKeyString);
-
+      const tiles = generateTiles();
+      setTiles(tiles);
+      const tileFields = tiles.map((tile) => hashUrl(tile.url));
+      console.log("zkAppWorkerClient", zkAppWorkerClient);
+      const initGameProof = await zkAppWorkerClient!.initializeGame(
+        verificationKey,
+        playerPublicKeyString,
+        tileFields.map((f) => f.toBigInt())
+      );
+      console.log("initGameProof", initGameProof);
       setContractResult(response);
     } catch (error) {
       console.error("Failed to deploy contract:", error);
-
       // Set error message in state
       setErrorMessage("Failed to deploy contract. Please try again.");
     } finally {
       setIsLoading(false);
+      router.push("/playGame");
     }
   };
 
@@ -72,30 +88,6 @@ const StartPage: React.FC = () => {
       >
         {isLoading ? "Deploying..." : "Deploy Contract"}
       </button>
-
-      {contractResult && (
-        <div>
-          <h3>Deployment Result:</h3>
-          <p>
-            <strong>zkApp Address:</strong> {contractResult.zkAppAddress}
-          </p>
-          <p>
-            <strong>Transaction Hash:</strong> {contractResult.hash}
-          </p>
-          <a
-            href={`https://minascan.io/devnet/tx/${contractResult.hash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: "#007BFF",
-              textDecoration: "none",
-              fontSize: "16px",
-            }}
-          >
-            View Transaction on MinaScan
-          </a>
-        </div>
-      )}
 
       {errorMessage && (
         <div style={{ color: "red", marginTop: "10px" }}>

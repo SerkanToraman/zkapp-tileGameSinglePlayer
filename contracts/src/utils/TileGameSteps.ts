@@ -9,6 +9,7 @@ export class TileGameLogic {
     player: PublicKey,
     playerBoard: Field[]
   ) {
+    console.log('playerBoard', playerBoard);
     // Generate proof and output using the ZkProgram
     const { proof: initGameProof } = await TileGameProgram.initGamePlayer(
       player,

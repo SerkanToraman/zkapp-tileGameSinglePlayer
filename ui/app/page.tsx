@@ -5,14 +5,14 @@ import Head from "next/head";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // Import the useRouter hook
 import { useWalletStore } from "../store/walletStore";
+import { useZkProgramStore } from "../store/zkProgramStore";
 import "./reactCOIServiceWorker";
 import ZkappWorkerClient from "../lib/contract/zkappWorkerClient";
 
 export default function Home() {
   const router = useRouter(); // Initialize the router
   const { walletInfo, connect } = useWalletStore();
-  const [zkappWorkerClient, setZkappWorkerClient] =
-    useState<null | ZkappWorkerClient>(null);
+  const { setVerificationKey, setZkAppWorkerClient } = useZkProgramStore();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
 
@@ -25,13 +25,17 @@ export default function Home() {
           setStatus("Initializing web worker...");
 
           const zkappWorkerClient = new ZkappWorkerClient();
-          setZkappWorkerClient(zkappWorkerClient);
+          setZkAppWorkerClient(zkappWorkerClient);
+          console.log("zkappWorkerClient", zkappWorkerClient);
 
           await new Promise((resolve) => setTimeout(resolve, 5000));
           setStatus("Loading web worker complete");
 
           setStatus("Compiling TileGame program...");
-          await zkappWorkerClient.compileTileGameProgram();
+          const verificationKey =
+            await zkappWorkerClient!.compileTileGameProgram();
+          console.log("Verification key:", verificationKey);
+          setVerificationKey(verificationKey);
           setStatus("Compilation complete");
 
           router.push("/startGame");
