@@ -8,7 +8,7 @@ export interface WalletInfo {
 }
 
 export class Wallet {
-  private account: string | null = null; // Store account as a string (Base58)
+  private account: string | null = null;
   private network: ChainInfoArgs | null = null;
   private isConnected = false;
 
@@ -44,9 +44,14 @@ export class Wallet {
   public async switchNetwork(args: SwitchChainArgs): Promise<WalletInfo> {
     if (!window.mina) throw new Error("Auro Wallet not installed");
 
-    const response = await window.mina.switchChain(args);
-    if ("networkID" in response) {
-      this.network = response;
+    const response: unknown = await window.mina.switchChain(args);
+    if (
+      response &&
+      typeof response === "object" &&
+      "networkID" in response &&
+      typeof response.networkID === "string"
+    ) {
+      this.network = response as ChainInfoArgs;
     }
 
     return this.getWalletInfo();
@@ -59,5 +64,13 @@ export class Wallet {
       network: this.network,
       isConnected: this.isConnected,
     };
+  }
+  public async signMessage(message: string): Promise<string> {
+    if (!this.account) throw new Error("No account connected");
+    if (!window.mina) throw new Error("Auro Wallet not installed");
+
+    const signature = await window.mina.signMessage(message);
+    if (typeof signature === "string") return signature;
+    throw new Error("Failed to sign message");
   }
 }

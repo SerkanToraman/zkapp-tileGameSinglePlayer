@@ -63,6 +63,18 @@ describe('GameContract', () => {
         new Tile({ id: hashUrl('/models/tile2.glb') }),
         new Tile({ id: hashUrl('/models/tile1.glb') }),
         new Tile({ id: hashUrl('/models/tile2.glb') }),
+        new Tile({ id: hashUrl('/models/tile3.glb') }),
+        new Tile({ id: hashUrl('/models/tile4.glb') }),
+        new Tile({ id: hashUrl('/models/tile5.glb') }),
+        new Tile({ id: hashUrl('/models/tile6.glb') }),
+        new Tile({ id: hashUrl('/models/tile7.glb') }),
+        new Tile({ id: hashUrl('/models/tile8.glb') }),
+        new Tile({ id: hashUrl('/models/tile3.glb') }),
+        new Tile({ id: hashUrl('/models/tile4.glb') }),
+        new Tile({ id: hashUrl('/models/tile5.glb') }),
+        new Tile({ id: hashUrl('/models/tile6.glb') }),
+        new Tile({ id: hashUrl('/models/tile7.glb') }),
+        new Tile({ id: hashUrl('/models/tile8.glb') }),
       ],
     });
   });

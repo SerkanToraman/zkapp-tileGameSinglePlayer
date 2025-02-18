@@ -3,6 +3,8 @@ import { useTileStore } from "../../store/tileStore";
 import { Canvas } from "@react-three/fiber";
 import { useState, useCallback, useRef } from "react";
 import { Tile } from "../../components/Tile";
+import { useZkProgramStore } from "../../store/zkProgramStore";
+import { useWalletStore } from "../../store/walletStore";
 
 const GamePage: React.FC = () => {
   const { tiles } = useTileStore();
@@ -12,41 +14,75 @@ const GamePage: React.FC = () => {
   const [disappearingTiles, setDisappearingTiles] = useState<string[]>([]);
   const [score, setScore] = useState(0);
   const [isChecking, setIsChecking] = useState(false);
+  const { verificationKey, zkAppWorkerClient, proof } = useZkProgramStore();
+  const { walletInfo, signMessage } = useWalletStore();
 
   const canFlipMore = flippedBackIds.length < 2;
 
-  const handleTileFlip = useCallback((tileId: string, tileUrl: string) => {
-    console.log(`handleTileFlip: ${tileId} ${tileUrl}`);
-    console.log("flippedTilesRef.current", flippedTilesRef.current);
-    if (flippedTilesRef.current.some((tile) => tile.id === tileId)) return;
-    flippedTilesRef.current.push({ id: tileId, url: tileUrl });
-    if (flippedTilesRef.current.length === 2) {
-      setIsChecking(true);
-      if (flippedTilesRef.current[0].url === flippedTilesRef.current[1].url) {
-        const matchedTileIds = [
-          flippedTilesRef.current[0].id,
-          flippedTilesRef.current[1].id,
-        ];
-        setTimeout(() => {
-          setMatchedTiles((prev) => [...prev, ...matchedTileIds]);
-          flippedTilesRef.current = [];
-          setScore((prev) => prev + 1);
-          setIsChecking(false);
-        }, 1000);
-      } else {
-        console.log("not matched");
-        const unmatchedTileIds = flippedTilesRef.current.map((tile) => tile.id);
-        setTimeout(() => {
-          setFlippedBackIds(unmatchedTileIds);
-          flippedTilesRef.current = [];
+  const handleTileFlip = useCallback(
+    async (tileId: string, tileUrl: string) => {
+      console.log(`handleTileFlip: ${tileId} ${tileUrl}`);
+      console.log("flippedTilesRef.current", flippedTilesRef.current);
+      if (flippedTilesRef.current.some((tile) => tile.id === tileId)) return;
+      flippedTilesRef.current.push({ id: tileId, url: tileUrl });
+      if (flippedTilesRef.current.length === 2) {
+        setIsChecking(true);
+        if (flippedTilesRef.current[0].url === flippedTilesRef.current[1].url) {
+          const matchedTileIds = [
+            flippedTilesRef.current[0].id,
+            flippedTilesRef.current[1].id,
+          ];
           setTimeout(() => {
-            setFlippedBackIds([]);
+            setMatchedTiles((prev) => [...prev, ...matchedTileIds]);
+            flippedTilesRef.current = [];
+            setScore((prev) => prev + 1);
             setIsChecking(false);
-          }, 100);
-        }, 1000);
+          }, 1000);
+
+          // const step = BigInt(1);
+          // //has the tile been flipped before?
+          // const selectedTiles = flippedTilesRef.current.map((tile) =>
+          //   Field(tile.id)
+          // );
+          // const selectedTilesHash = hashFieldsWithPoseidon(selectedTiles);
+          // const selectedTilesArray = selectedTiles.map((f) => f.toBigInt());
+
+          // if (!proof) {
+          //   console.error("No proof available");
+          //   return;
+          // }
+
+          // const playTurn = await zkAppWorkerClient!.play(
+          //   proof,
+          //   verificationKey,
+          //   selectedTilesArray,
+          //   playerSignature,
+          //   step
+          // );
+        } else {
+          console.log("not matched");
+          const unmatchedTileIds = flippedTilesRef.current.map(
+            (tile) => tile.id
+          );
+          setTimeout(() => {
+            setFlippedBackIds(unmatchedTileIds);
+            flippedTilesRef.current = [];
+            setTimeout(() => {
+              setFlippedBackIds([]);
+              setIsChecking(false);
+            }, 100);
+          }, 1000);
+        }
+        try {
+          const playerSignature = await signMessage("test");
+          console.log("playerSignature", playerSignature);
+        } catch (error) {
+          console.error("Error signing message:", error);
+        }
       }
-    }
-  }, []);
+    },
+    []
+  );
 
   const handleTileDisappear = useCallback((tileId: string) => {
     setDisappearingTiles((prev) => [...prev, tileId]);

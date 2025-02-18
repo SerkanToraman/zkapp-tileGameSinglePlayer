@@ -7,7 +7,7 @@ import { generateTiles } from "../../lib/tile/generateTiles";
 import { useTileStore } from "../../store/tileStore";
 import { useRouter } from "next/navigation";
 import { useZkProgramStore } from "../../store/zkProgramStore";
-import { hashUrl } from "../../lib/zkProgram/helpers";
+import { hashUrl } from "../../lib/helpers";
 
 const StartPage: React.FC = () => {
   const router = useRouter(); // Initialize the router
@@ -16,7 +16,7 @@ const StartPage: React.FC = () => {
     zkAppAddress: string;
     hash: string;
   } | null>(null);
-  const { verificationKey, zkAppWorkerClient } = useZkProgramStore();
+  const { verificationKey, zkAppWorkerClient, setProof } = useZkProgramStore();
   const [errorMessage, setErrorMessage] = useState<string | null>(null); // State to store error message
   const [isLoading, setIsLoading] = useState<boolean>(false); // State to manage loading state
   const { setTiles } = useTileStore();
@@ -39,6 +39,7 @@ const StartPage: React.FC = () => {
         tileFields.map((f) => f.toBigInt())
       );
       console.log("initGameProof", initGameProof);
+      setProof(initGameProof);
       setContractResult(response);
     } catch (error) {
       console.error("Failed to deploy contract:", error);

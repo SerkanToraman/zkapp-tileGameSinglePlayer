@@ -1,8 +1,7 @@
 import * as Comlink from "comlink";
 import { TileGameProgram } from "../../../contracts/build/src/TileGameProgram.js";
-import { Tile } from "../types.js";
-import { PublicKey, Field } from "o1js";
-
+import { PublicKey, Field, Signature, SelfProof } from "o1js";
+import { PublicOutput } from "../types";
 // This is the original way to import the TileGameProgram
 // const TileGameProgram = (
 //   await import("../../../contracts/build/src/TileGameProgram.js")
@@ -35,6 +34,23 @@ export const api = {
       tiles
     );
     return initGameProof;
+  },
+  async play(
+    earlierProof: SelfProof<undefined, PublicOutput>,
+    verificationKey: string,
+    playerSignature: Signature,
+    selectedTiles: bigint[],
+    step: bigint
+  ) {
+    const tiles = selectedTiles.map((f) => Field(f));
+    const stepField = Field(step);
+    const { proof: playTurn } = await TileGameProgram.play(
+      earlierProof,
+      tiles,
+      playerSignature,
+      stepField
+    );
+    return playTurn;
   },
 };
 

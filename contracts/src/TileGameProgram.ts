@@ -14,10 +14,10 @@ import { hashFieldsWithPoseidon } from './utils/helpers';
 //Turn de 1,2 yerine artan sayi olacak ve kullaniclar turn sayisi mod kullanarak tek mi cift mi di ye kontol edilecek
 // Bitcoine bak, etherium - proof of stake and proof of work
 
-const emptyTiles = new Array(2).fill(Field(-1));
-const emptyPreviousMoves = new Array(4).fill(Field(-1));
-const boardArraySize = 4;
+const boardArraySize = 16;
 const selectedTilesSize = 2;
+const emptyTiles = new Array(2).fill(Field(-1));
+const emptyPreviousMoves = new Array(boardArraySize).fill(Field(-1));
 
 // Define the TileGameProgram
 export const TileGameProgram = ZkProgram({
@@ -28,7 +28,7 @@ export const TileGameProgram = ZkProgram({
   methods: {
     // Initialize the game state for Player 1
     initGamePlayer: {
-      privateInputs: [PublicKey, Provable.Array(Field, 4)],
+      privateInputs: [PublicKey, Provable.Array(Field, boardArraySize)],
       async method(player: PublicKey, playerBoard: Field[]) {
         // Verify player is not empty
         player.isEmpty().assertFalse('Player public key cannot be empty');
@@ -111,7 +111,7 @@ export const TileGameProgram = ZkProgram({
     check: {
       privateInputs: [
         SelfProof<undefined, PublicOutput>,
-        Provable.Array(Field, 4),
+        Provable.Array(Field, boardArraySize),
       ],
       async method(
         earlierProof: SelfProof<undefined, PublicOutput>,
@@ -151,6 +151,13 @@ export const TileGameProgram = ZkProgram({
         }
         // Check if the selected tiles match
         const isTilesMatch = tile1.equals(tile2).and(isMoveEmpty).not();
+
+        // Verify that PlayerPreviousMoves is a valid array
+        // const previousMoves = earlierProof.publicOutput.PlayerPreviousMoves;
+        // Field(previousMoves.length).assertEquals(
+        //   Field(boardArraySize),
+        //   'Invalid previous moves array length'
+        // );
 
         // Loop through matched tiles to validate selected tiles without using `if`
         for (let i = 0; i < boardArraySize; i++) {

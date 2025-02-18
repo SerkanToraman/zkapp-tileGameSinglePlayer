@@ -35,7 +35,7 @@ export class PublicOutput extends Struct({
   turn: Field,
   step: Field,
   move: Provable.Array(Field, 2),
-  PlayerPreviousMoves: Provable.Array(Field, 4),
+  PlayerPreviousMoves: Provable.Array(Field, 16),
   boardHash: Field,
   playerMatchCount: Field,
 }) {}
