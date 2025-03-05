@@ -38,16 +38,18 @@ export const api = {
   async play(
     earlierProof: SelfProof<undefined, PublicOutput>,
     verificationKey: string,
-    playerSignature: Signature,
+    playerSignature: string,
     selectedTiles: bigint[],
     step: bigint
   ) {
     const tiles = selectedTiles.map((f) => Field(f));
     const stepField = Field(step);
+    const signature = Signature.fromBase58(playerSignature);
+    console.log("signature Worker", signature);
     const { proof: playTurn } = await TileGameProgram.play(
       earlierProof,
       tiles,
-      playerSignature,
+      signature,
       stepField
     );
     return playTurn;

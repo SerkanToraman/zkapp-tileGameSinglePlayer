@@ -5,6 +5,10 @@ import { useState, useCallback, useRef } from "react";
 import { Tile } from "../../components/Tile";
 import { useZkProgramStore } from "../../store/zkProgramStore";
 import { useWalletStore } from "../../store/walletStore";
+import { hashFieldsWithPoseidon } from "../../lib/helpers";
+import { Field, Poseidon, Signature } from "o1js";
+import { SignedData } from "@aurowallet/mina-provider";
+import { ProviderError } from "@aurowallet/mina-provider";
 
 const GamePage: React.FC = () => {
   const { tiles } = useTileStore();
@@ -15,7 +19,7 @@ const GamePage: React.FC = () => {
   const [score, setScore] = useState(0);
   const [isChecking, setIsChecking] = useState(false);
   const { verificationKey, zkAppWorkerClient, proof } = useZkProgramStore();
-  const { walletInfo, signMessage } = useWalletStore();
+  const { walletInfo } = useWalletStore();
 
   const canFlipMore = flippedBackIds.length < 2;
 
@@ -38,27 +42,6 @@ const GamePage: React.FC = () => {
             setScore((prev) => prev + 1);
             setIsChecking(false);
           }, 1000);
-
-          // const step = BigInt(1);
-          // //has the tile been flipped before?
-          // const selectedTiles = flippedTilesRef.current.map((tile) =>
-          //   Field(tile.id)
-          // );
-          // const selectedTilesHash = hashFieldsWithPoseidon(selectedTiles);
-          // const selectedTilesArray = selectedTiles.map((f) => f.toBigInt());
-
-          // if (!proof) {
-          //   console.error("No proof available");
-          //   return;
-          // }
-
-          // const playTurn = await zkAppWorkerClient!.play(
-          //   proof,
-          //   verificationKey,
-          //   selectedTilesArray,
-          //   playerSignature,
-          //   step
-          // );
         } else {
           console.log("not matched");
           const unmatchedTileIds = flippedTilesRef.current.map(
@@ -74,10 +57,70 @@ const GamePage: React.FC = () => {
           }, 1000);
         }
         try {
-          const playerSignature = await signMessage("test");
-          console.log("playerSignature", playerSignature);
+          if (!zkAppWorkerClient || !proof || !verificationKey) {
+            console.error("ZK components not initialized:", {
+              hasClient: !!zkAppWorkerClient,
+              hasProof: !!proof,
+              hasVerificationKey: !!verificationKey,
+            });
+            return;
+          }
+
+          const step = Field(1);
+          const selectedTiles = flippedTilesRef.current.map((tile) =>
+            Field(tile.id)
+          );
+          const valueTobeHashed = [step, ...selectedTiles];
+
+          const selectedTilesArray = selectedTiles.map((f) => f.toBigInt());
+
+          const hashValue = Poseidon.hash(valueTobeHashed);
+          const hashValueArray = hashValue.toBigInt().toString();
+
+          // Before signing
+          try {
+            const signatureResponse =
+              await // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (window as any)?.mina
+                ?.signMessage({
+                  message: hashValueArray,
+                })
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .catch((err: any) => err);
+
+            console.log("Signature response:", signatureResponse.signature);
+            console.log(
+              "Signature response scalar:",
+              Field(signatureResponse.signature.scalar).toString()
+            );
+            console.log(
+              "Signature response field:",
+              Field(signatureResponse.signature.field).toString()
+            );
+
+            // Convert signature to base58
+            const signatureBase58 = Signature.fromObject({
+              r: signatureResponse.signature.field,
+              s: signatureResponse.signature.scalar,
+            }).toBase58();
+
+            console.log("Signature base58:", signatureBase58);
+
+            const steps = BigInt(1);
+
+            const playTurn = await zkAppWorkerClient.play(
+              proof,
+              verificationKey,
+              selectedTilesArray,
+              signatureBase58,
+              steps
+            );
+            console.log("playTurn", playTurn);
+          } catch (error) {
+            console.error("Detailed signing error:", error);
+          }
         } catch (error) {
-          console.error("Error signing message:", error);
+          console.error("Error in ZK game interaction:", error);
         }
       }
     },

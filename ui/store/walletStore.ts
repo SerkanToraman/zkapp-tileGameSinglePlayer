@@ -9,7 +9,6 @@ interface WalletState {
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   setAccount: (account: string | null) => void;
-  signMessage: (message: string) => Promise<string>;
 }
 
 // Initialize wallet if running in a browser
@@ -46,12 +45,6 @@ export const useWalletStore = create<WalletState>((set) => ({
       wallet.disconnect();
       set({ walletInfo: { ...defaultWalletInfo, isConnected: false } }); // Revert to default wallet info
     }
-  },
-  signMessage: async (message: string) => {
-    if (wallet) {
-      return await wallet.signMessage(message);
-    }
-    throw new Error("Wallet not connected");
   },
 
   setAccount: (account: string | null) => {

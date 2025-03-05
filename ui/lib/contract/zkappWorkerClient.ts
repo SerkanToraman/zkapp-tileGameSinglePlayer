@@ -40,14 +40,13 @@ export default class ZkappWorkerClient {
     earlierProof: SelfProof<undefined, PublicOutput>,
     verificationKey: string,
     selectedTiles: bigint[],
-    playerSignature: Signature,
+    signature: string,
     step: bigint
   ) {
-    console.log("playClient");
     return await this.remoteApi.play(
       earlierProof,
       verificationKey,
-      playerSignature,
+      signature,
       selectedTiles,
       step
     );

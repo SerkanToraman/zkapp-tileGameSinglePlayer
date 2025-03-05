@@ -1,5 +1,11 @@
 import { PublicKey } from "o1js";
-import { ChainInfoArgs, SwitchChainArgs } from "@aurowallet/mina-provider";
+import {
+  ChainInfoArgs,
+  ProviderError,
+  SignedData,
+  SignMessageArgs,
+  SwitchChainArgs,
+} from "@aurowallet/mina-provider";
 
 export interface WalletInfo {
   account: string | null; // Use string instead of PublicKey for UI friendliness
@@ -65,12 +71,11 @@ export class Wallet {
       isConnected: this.isConnected,
     };
   }
-  public async signMessage(message: string): Promise<string> {
-    if (!this.account) throw new Error("No account connected");
-    if (!window.mina) throw new Error("Auro Wallet not installed");
-
-    const signature = await window.mina.signMessage(message);
-    if (typeof signature === "string") return signature;
-    throw new Error("Failed to sign message");
-  }
 }
+
+// const signResult: SignedData | ProviderError = await (window as any)?.mina
+// ?.signMessage({
+//   message: message,
+// })
+// .catch((err: any) => err);
+// console.log("signResult", signResult);
