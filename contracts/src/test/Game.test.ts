@@ -116,6 +116,7 @@ describe('GameContract', () => {
     );
     const step = earlierProof.publicOutput.step;
     playerSignature = Signature.create(PlayerKey, [step, selectedTilesHash]);
+    console.log('playerSignature', playerSignature);
 
     const proof = await TileGameLogic.play(
       earlierProof,
