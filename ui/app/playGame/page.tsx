@@ -5,10 +5,11 @@ import { useState, useCallback, useRef } from "react";
 import { Tile } from "../../components/Tile";
 import { useZkProgramStore } from "../../store/zkProgramStore";
 import { useWalletStore } from "../../store/walletStore";
-import { hashFieldsWithPoseidon } from "../../lib/helpers";
+import { hashFieldsWithPoseidon, hashUrl } from "../../lib/helpers";
 import { Field, Poseidon, Signature } from "o1js";
 import { SignedData } from "@aurowallet/mina-provider";
 import { ProviderError } from "@aurowallet/mina-provider";
+import JSONbig from "json-bigint";
 
 const GamePage: React.FC = () => {
   const { tiles } = useTileStore();
@@ -25,8 +26,6 @@ const GamePage: React.FC = () => {
 
   const handleTileFlip = useCallback(
     async (tileId: string, tileUrl: string) => {
-      console.log(`handleTileFlip: ${tileId} ${tileUrl}`);
-      console.log("flippedTilesRef.current", flippedTilesRef.current);
       if (flippedTilesRef.current.some((tile) => tile.id === tileId)) return;
       flippedTilesRef.current.push({ id: tileId, url: tileUrl });
       if (flippedTilesRef.current.length === 2) {
@@ -67,11 +66,13 @@ const GamePage: React.FC = () => {
           }
 
           const step = Field(1);
+          console.log("selectedTiles", flippedTilesRef.current);
           const selectedTiles = flippedTilesRef.current.map((tile) =>
-            Field(tile.id)
+            hashUrl(tile.id)
           );
-          const valueTobeHashed = [step, ...selectedTiles];
+          console.log("selectedTiles", selectedTiles);
 
+          const valueTobeHashed = [step, ...selectedTiles];
           const selectedTilesArray = selectedTiles.map((f) => f.toBigInt());
 
           const hashValue = Poseidon.hash(valueTobeHashed);
@@ -88,32 +89,28 @@ const GamePage: React.FC = () => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .catch((err: any) => err);
 
-            console.log("Signature response:", signatureResponse.signature);
-            console.log(
-              "Signature response scalar:",
-              Field(signatureResponse.signature.scalar).toString()
-            );
-            console.log(
-              "Signature response field:",
-              Field(signatureResponse.signature.field).toString()
-            );
+            // Convert signature to json
 
-            // Convert signature to base58
-            const signatureBase58 = Signature.fromObject({
-              r: signatureResponse.signature.field,
-              s: signatureResponse.signature.scalar,
-            }).toBase58();
-
-            console.log("Signature base58:", signatureBase58);
+            const signatureData = {
+              signature: {
+                field: signatureResponse.signature.field,
+                scalar: signatureResponse.signature.scalar,
+              },
+            };
+            const signatureJson = JSON.stringify(signatureData);
 
             const steps = BigInt(1);
+            const proofJson = JSONbig.stringify(proof);
+
+            //get the type of the proof
+            const proofType = typeof proof;
+            console.log("proofType", proofType);
 
             const playTurn = await zkAppWorkerClient.play(
-              proof,
+              proofJson,
               verificationKey,
               selectedTilesArray,
-              signatureBase58,
-              steps
+              signatureJson
             );
             console.log("playTurn", playTurn);
           } catch (error) {
@@ -164,9 +161,9 @@ const GamePage: React.FC = () => {
                 ]}
                 canFlip={canFlipMore}
                 isFlippedExternally={flippedBackIds.includes(index.toString())}
-                onTileFlip={(tileId, tileUrl) =>
-                  handleTileFlip(tileId, tileUrl)
-                }
+                onTileFlip={(tileId, tileUrl) => {
+                  handleTileFlip(tileId, tileUrl);
+                }}
                 isMatched={matchedTiles.includes(index.toString())}
                 onTileDisappear={() => handleTileDisappear(index.toString())}
               />

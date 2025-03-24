@@ -2,6 +2,7 @@ import * as Comlink from "comlink";
 import { TileGameProgram } from "../../../contracts/build/src/TileGameProgram.js";
 import { PublicKey, Field, Signature, SelfProof } from "o1js";
 import { PublicOutput } from "../types";
+import { parseSignature } from "./zkProgram";
 // This is the original way to import the TileGameProgram
 // const TileGameProgram = (
 //   await import("../../../contracts/build/src/TileGameProgram.js")
@@ -36,20 +37,24 @@ export const api = {
     return initGameProof;
   },
   async play(
-    earlierProof: SelfProof<undefined, PublicOutput>,
+    earlierProof: string,
     verificationKey: string,
     playerSignature: string,
-    selectedTiles: bigint[],
-    step: bigint
+    selectedTiles: bigint[]
   ) {
-    const tiles = selectedTiles.map((f) => Field(f));
-    const stepField = Field(step);
-    const signature = Signature.fromBase58(playerSignature);
-    console.log("signature Worker", signature);
+    console.log("earlierProofData", earlierProof);
+    const tilesArray = selectedTiles.map((f) => Field(f));
+    const earlierProofData = JSON.parse(earlierProof);
+    console.log("earlierProofData", earlierProofData);
+
+    console.log("tilesArray", tilesArray);
+    const stepField = Field(1);
+    const signatureData = JSON.parse(playerSignature);
+
     const { proof: playTurn } = await TileGameProgram.play(
-      earlierProof,
-      tiles,
-      signature,
+      earlierProofData,
+      tilesArray,
+      signatureData,
       stepField
     );
     return playTurn;

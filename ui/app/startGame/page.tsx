@@ -32,13 +32,12 @@ const StartPage: React.FC = () => {
       const tiles = generateTiles();
       setTiles(tiles);
       const tileFields = tiles.map((tile) => hashUrl(tile.url));
-      console.log("zkAppWorkerClient", zkAppWorkerClient);
+      console.log("tileFields", tileFields);
       const initGameProof = await zkAppWorkerClient!.initializeGame(
         verificationKey,
         playerPublicKeyString,
         tileFields.map((f) => f.toBigInt())
       );
-      console.log("initGameProof", initGameProof);
       setProof(initGameProof);
       setContractResult(response);
     } catch (error) {

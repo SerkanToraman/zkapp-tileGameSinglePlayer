@@ -69,15 +69,12 @@ export const TileGameProgram = ZkProgram({
         playerSignature: Signature,
         step: Field
       ) {
-        const selectedTilesArray = new Array(selectedTilesSize);
-        for (let i = 0; i < selectedTilesSize; i++) {
-          selectedTilesArray[i] = selectedTiles[i];
-        }
-        const valueTobeHashed = [Field(1), ...selectedTilesArray];
-        const selectedTilesHash = hashFieldsWithPoseidon(valueTobeHashed);
+        const selectedTilesHashForVerification =
+          hashFieldsWithPoseidon(selectedTiles);
+
         const isVerified = playerSignature.verify(
           earlierProof.publicOutput.Player,
-          [selectedTilesHash]
+          [step, selectedTilesHashForVerification]
         );
         earlierProof.verify();
         // Enforce the signature verification result

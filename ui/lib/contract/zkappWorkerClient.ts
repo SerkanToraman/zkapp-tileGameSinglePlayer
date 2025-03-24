@@ -37,18 +37,16 @@ export default class ZkappWorkerClient {
   }
 
   async play(
-    earlierProof: SelfProof<undefined, PublicOutput>,
+    earlierProof: string,
     verificationKey: string,
     selectedTiles: bigint[],
-    signature: string,
-    step: bigint
+    signature: string
   ) {
     return await this.remoteApi.play(
       earlierProof,
       verificationKey,
       signature,
-      selectedTiles,
-      step
+      selectedTiles
     );
   }
 }

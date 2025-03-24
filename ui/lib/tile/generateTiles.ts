@@ -35,6 +35,7 @@ export function generateTiles(): Tile[] {
     const j = Math.floor(Math.random() * (i + 1));
     [allTiles[i], allTiles[j]] = [allTiles[j], allTiles[i]];
   }
+  console.log("allTiles", allTiles);
 
   return allTiles;
 }

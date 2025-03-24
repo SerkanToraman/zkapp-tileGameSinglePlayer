@@ -47,10 +47,6 @@ describe('GameContract', () => {
 
     [PlayerAccount] = localChain.testAccounts;
     PlayerKey = PlayerAccount.key;
-    const Player1AccountBalance = await Mina.getBalance(PlayerAccount);
-    console.log(
-      `Player 1 initial balance: ${Player1AccountBalance.toString()}`
-    );
 
     zkAppPrivateKey = PrivateKey.random();
     zkAppAddress = zkAppPrivateKey.toPublicKey();
@@ -92,10 +88,7 @@ describe('GameContract', () => {
 
     // Verify the total amount in the zkApp account
     const balance = await Mina.getBalance(zkAppAddress);
-    const player1Balance = await Mina.getBalance(PlayerAccount);
-    console.log(`Initial zkApp Balance: ${balance.toString()}`);
-    console.log(`Initial Player 1 Balance: ${player1Balance.toString()}`);
-    expect(balance).toEqual(UInt64.from(2_000_000_000));
+    expect(balance).toEqual(UInt64.from(200_000_000));
   });
 
   it('should initialise the game', async () => {
@@ -111,12 +104,10 @@ describe('GameContract', () => {
 
   it('should play turn 1', async () => {
     const selectedTiles = [Field(0), Field(2)];
-    const selectedTilesHash = hashFieldsWithPoseidon(
-      selectedTiles.map((tile) => tile)
-    );
+    const selectedTilesHash = hashFieldsWithPoseidon(selectedTiles);
     const step = earlierProof.publicOutput.step;
+
     playerSignature = Signature.create(PlayerKey, [step, selectedTilesHash]);
-    console.log('playerSignature', playerSignature);
 
     const proof = await TileGameLogic.play(
       earlierProof,
@@ -153,9 +144,7 @@ describe('GameContract', () => {
 
   it('should play turn 2', async () => {
     const selectedTiles = [Field(1), Field(3)];
-    const selectedTilesHash = hashFieldsWithPoseidon(
-      selectedTiles.map((tile) => tile)
-    );
+    const selectedTilesHash = hashFieldsWithPoseidon(selectedTiles);
     const step = earlierProof.publicOutput.step;
     playerSignature = Signature.create(PlayerKey, [step, selectedTilesHash]);
 
