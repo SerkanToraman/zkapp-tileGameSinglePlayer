@@ -2,15 +2,15 @@
 
 import { create } from "zustand";
 import ZkappWorkerClient from "../lib/contract/zkappWorkerClient";
-import { PublicOutput } from "../lib/types";
-import { SelfProof } from "o1js";
+import { TileGameProof } from "../../contracts/src/TileGameProgram";
+
 interface ZkProgramState {
   verificationKey: string;
   setVerificationKey: (key: string) => void;
   zkAppWorkerClient: ZkappWorkerClient | null;
   setZkAppWorkerClient: (client: ZkappWorkerClient) => void;
-  proof: SelfProof<undefined, PublicOutput> | null;
-  setProof: (proof: SelfProof<undefined, PublicOutput>) => void;
+  proof: TileGameProof | null;
+  setProof: (proof: TileGameProof) => void;
 }
 
 export const useZkProgramStore = create<ZkProgramState>((set) => ({
@@ -20,6 +20,5 @@ export const useZkProgramStore = create<ZkProgramState>((set) => ({
   setZkAppWorkerClient: (client: ZkappWorkerClient) =>
     set({ zkAppWorkerClient: client }),
   proof: null,
-  setProof: (proof: SelfProof<undefined, PublicOutput>) =>
-    set({ proof: proof }),
+  setProof: (proof: TileGameProof) => set({ proof: proof }),
 }));

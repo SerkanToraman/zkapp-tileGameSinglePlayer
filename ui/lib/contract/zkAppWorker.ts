@@ -1,5 +1,8 @@
 import * as Comlink from "comlink";
-import { TileGameProgram } from "../../../contracts/build/src/TileGameProgram.js";
+import {
+  TileGameProgram,
+  TileGameProof,
+} from "../../../contracts/build/src/TileGameProgram.js";
 import { PublicKey, Field, Signature, SelfProof } from "o1js";
 import { PublicOutput } from "../types";
 import { parseSignature } from "./zkProgram";
@@ -46,6 +49,7 @@ export const api = {
     const tilesArray = selectedTiles.map((f) => Field(f));
     const earlierProofData = JSON.parse(earlierProof);
     console.log("earlierProofData", earlierProofData);
+    
 
     console.log("tilesArray", tilesArray);
     const stepField = Field(1);

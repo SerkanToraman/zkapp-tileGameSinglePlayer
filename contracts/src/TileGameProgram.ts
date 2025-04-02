@@ -5,7 +5,9 @@ import {
   Provable,
   PublicKey,
   Signature,
+  Proof,
 } from 'o1js';
+
 import { PublicOutput } from './utils/types';
 import { hashFieldsWithPoseidon } from './utils/helpers';
 
@@ -235,3 +237,5 @@ export const TileGameProgram = ZkProgram({
     },
   },
 });
+
+export class TileGameProof extends ZkProgram.Proof(TileGameProgram) {}

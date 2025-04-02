@@ -100,11 +100,7 @@ const GamePage: React.FC = () => {
             const signatureJson = JSON.stringify(signatureData);
 
             const steps = BigInt(1);
-            const proofJson = JSONbig.stringify(proof);
-
-            //get the type of the proof
-            const proofType = typeof proof;
-            console.log("proofType", proofType);
+            const proofJson = JSON.stringify(proof.toJSON());
 
             const playTurn = await zkAppWorkerClient.play(
               proofJson,
